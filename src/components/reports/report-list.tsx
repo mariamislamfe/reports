@@ -7,7 +7,9 @@ import { HSE_FIELD_KEYS } from "@/lib/types";
 import type { Dictionary } from "@/lib/i18n";
 import { Icon } from "@/components/ui/icon";
 import { ReportStatusBadge } from "@/components/ui/status-badge";
+import { ConfirmButton } from "@/components/ui/confirm-button";
 import { formatDateTime, isDeadlineUrgent } from "@/lib/utils";
+import { deleteReport } from "@/app/(app)/reports/actions";
 
 function needsAction(report: Report, profile: Profile): boolean {
   if (profile.role === "admin") return false;
@@ -138,6 +140,7 @@ export function ReportList({
                   report={r}
                   dict={dict}
                   highlighted={needsAction(r, profile)}
+                  canDelete={profile.role === "admin"}
                 />
               ))}
             </div>
@@ -152,44 +155,67 @@ function ReportCard({
   report: r,
   dict,
   highlighted,
+  canDelete,
 }: {
   report: Report;
   dict: Dictionary;
   highlighted?: boolean;
+  canDelete?: boolean;
 }) {
   const completionDate = r.field_values[HSE_FIELD_KEYS.COMPLETION_DATE] as string | undefined;
   const urgent = r.status !== "closed" && isDeadlineUrgent(completionDate);
+  const [error, setError] = useState<string | null>(null);
 
   return (
-    <Link
-      href={`/reports/${r.id}`}
-      className={`card block ${highlighted ? "ring-2 ring-brand-500" : ""}`}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate font-semibold text-slate-900 dark:text-slate-100">
-            {r.violation_snapshot.name}
-          </p>
-          <p className="truncate text-sm text-slate-500 dark:text-slate-400">{r.project_snapshot.name}</p>
+    <div className={`card ${highlighted ? "ring-2 ring-brand-500" : ""}`}>
+      <Link href={`/reports/${r.id}`} className="block">
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <p className="truncate font-semibold text-slate-900 dark:text-slate-100">
+              {r.violation_snapshot.name}
+            </p>
+            <p className="truncate text-sm text-slate-500 dark:text-slate-400">
+              {r.project_snapshot.name}
+            </p>
+          </div>
+          <ReportStatusBadge status={r.status} dict={dict} />
         </div>
-        <ReportStatusBadge status={r.status} dict={dict} />
-      </div>
-      <div className="mt-2 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
-        <span>{r.employee_snapshot.full_name}</span>
-        <span>{formatDateTime(r.created_at)}</span>
-      </div>
-      {completionDate && (
-        <div
-          className={`mt-2 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ${
-            urgent
-              ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
-              : "bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
-          }`}
-        >
-          <Icon name="warning" className="h-3.5 w-3.5" />
-          {dict.reports.deadline}: {completionDate}
+        <div className="mt-2 flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
+          <span>{r.employee_snapshot.full_name}</span>
+          <span>{formatDateTime(r.created_at)}</span>
+        </div>
+        {completionDate && (
+          <div
+            className={`mt-2 inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ${
+              urgent
+                ? "bg-red-50 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                : "bg-slate-50 text-slate-500 dark:bg-slate-800 dark:text-slate-400"
+            }`}
+          >
+            <Icon name="warning" className="h-3.5 w-3.5" />
+            {dict.reports.deadline}: {completionDate}
+          </div>
+        )}
+      </Link>
+
+      {canDelete && (
+        <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+          {error && <p className="text-xs text-red-600 dark:text-red-400">{error}</p>}
+          <div className="ms-auto">
+            <ConfirmButton
+              label={dict.common.delete}
+              icon="trash"
+              confirmLabel={dict.reports.deleteConfirm}
+              onConfirm={async () => {
+                setError(null);
+                const result = await deleteReport(r.id);
+                if (result.error) setError(result.error);
+              }}
+              dict={dict}
+            />
+          </div>
         </div>
       )}
-    </Link>
+    </div>
   );
 }

@@ -214,6 +214,7 @@ const ar: Dictionary = {
     sectionPendingObserver: "بانتظار الإغلاق النهائي",
     sectionClosed: "مغلقة",
     deadline: "الديدلاين",
+    deleteConfirm: "حذف التقرير نهائيًا؟",
   },
   closeOut: {
     title: "إكمال الإغلاق",
