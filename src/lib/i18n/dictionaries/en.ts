@@ -227,7 +227,7 @@ const en = {
     title: "Final Close-Out",
     description: "Confirm the fix and close this report.",
     comments: "Comments",
-    defaultComment: "After verification, this HSE observation record is closed by the below signature.",
+    defaultComment: "This HSE observation record is closed by the below signature.",
     submit: "Close Report",
     success: "Report closed.",
   },

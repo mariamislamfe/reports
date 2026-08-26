@@ -228,7 +228,7 @@ const ar: Dictionary = {
     title: "الإغلاق النهائي",
     description: "أكّد الحل وأغلق التقرير.",
     comments: "ملاحظات",
-    defaultComment: "بعد التحقق، تم إغلاق سجل ملاحظة السلامة هذا بالتوقيع أدناه.",
+    defaultComment: "This HSE observation record is closed by the below signature.",
     submit: "إغلاق التقرير",
     success: "تم إغلاق التقرير.",
   },
