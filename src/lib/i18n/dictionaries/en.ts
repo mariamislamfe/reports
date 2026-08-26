@@ -213,6 +213,7 @@ const en = {
     sectionPendingObserver: "Waiting on final close-out",
     sectionClosed: "Closed",
     deadline: "Deadline",
+    deleteConfirm: "Delete this report permanently?",
   },
   closeOut: {
     title: "Complete Close-Out",
