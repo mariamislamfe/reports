@@ -1,6 +1,7 @@
 import { Document, Page, View, Text, Image, StyleSheet, Font } from "@react-pdf/renderer";
 import path from "node:path";
 import { HSE_FIELD_KEYS, type Report } from "@/lib/types";
+import { reshapeArabicLigatures } from "./arabic-shape";
 
 // -----------------------------------------------------------------------------
 // Reproduces the company's real "HSE Observation Record" template
@@ -283,8 +284,13 @@ function PhotoGrid({ photos }: { photos: string[] }) {
 function formatValue(value: unknown): string {
   if (value === undefined || value === null || value === "") return "—";
   if (typeof value === "boolean") return value ? "Yes" : "No";
-  return String(value);
+  return reshapeArabicLigatures(String(value));
 }
+
+// Any free-text field (names, positions, project metadata, locations) can
+// contain Arabic typed by a user, so every such string is routed through the
+// same ligature fix as formatValue — see arabic-shape.ts for why.
+const R = (value: string | null | undefined) => reshapeArabicLigatures(value) || "";
 
 export function ViolationReportDocument({
   report,
@@ -337,27 +343,27 @@ export function ViolationReportDocument({
         <View style={styles.table}>
           <InfoRow
             label1="Business Unit"
-            value1={report.project_snapshot.business_unit ?? ""}
+            value1={R(report.project_snapshot.business_unit)}
             label2="Ref"
             value2={report.report_number}
           />
           <InfoRow
             label1="Project"
-            value1={report.project_snapshot.name}
+            value1={R(report.project_snapshot.name)}
             label2="Observation Date"
             value2={dateStr}
           />
           <InfoRow
             label1="Contractor"
-            value1={report.project_snapshot.contractor ?? ""}
+            value1={R(report.project_snapshot.contractor)}
             label2="Observation Time"
             value2={timeStr}
           />
           <InfoRow
             label1="Sup Consultant"
-            value1={report.project_snapshot.sup_consultant ?? ""}
+            value1={R(report.project_snapshot.sup_consultant)}
             label2="Observation Location"
-            value2={report.observation_location ?? ""}
+            value2={R(report.observation_location)}
             last
           />
         </View>
@@ -375,8 +381,8 @@ export function ViolationReportDocument({
           value={`The required date for completing the above mentioned actions is: ${formatValue(completionDate)}`}
         />
         <SignOffRow
-          name={report.employee_snapshot.full_name}
-          position={report.employee_snapshot.position ?? ""}
+          name={R(report.employee_snapshot.full_name)}
+          position={R(report.employee_snapshot.position)}
           date={dateStr}
           signatureDataUri={signatureDataUri}
         />
@@ -385,8 +391,8 @@ export function ViolationReportDocument({
         <FullRow label="Descriptions and evidence" value={formatValue(report.contractor_description)} />
         <PhotoGrid photos={contractorPhotoDataUris} />
         <SignOffRow
-          name={report.contractor_snapshot?.full_name ?? ""}
-          position={report.contractor_snapshot?.position ?? ""}
+          name={R(report.contractor_snapshot?.full_name)}
+          position={R(report.contractor_snapshot?.position)}
           date={contractorDateStr}
           signatureDataUri={contractorSignatureDataUri}
         />
@@ -397,13 +403,13 @@ export function ViolationReportDocument({
           value={formatValue(
             report.closeout_comments ??
               (report.status === "closed"
-                ? "After verification, this HSE observation record is closed by the below signature."
+                ? "This HSE observation record is closed by the below signature."
                 : null)
           )}
         />
         <SignOffRow
-          name={report.closeout_snapshot?.full_name ?? ""}
-          position={report.closeout_snapshot?.position ?? ""}
+          name={R(report.closeout_snapshot?.full_name)}
+          position={R(report.closeout_snapshot?.position)}
           date={closeoutDateStr}
           signatureDataUri={closeoutSignatureDataUri}
         />
@@ -421,14 +427,14 @@ export function ViolationReportDocument({
                       : styles.appendixRow
                   }
                 >
-                  <Text style={styles.appendixLabel}>{field.label}</Text>
+                  <Text style={styles.appendixLabel}>{R(field.label)}</Text>
                   <Text style={styles.appendixValue}>{formatValue(report.field_values[field.key])}</Text>
                 </View>
               ))}
               {report.notes && (
                 <View style={[styles.appendixRow, { borderBottomWidth: 0 }]}>
                   <Text style={styles.appendixLabel}>Additional Notes</Text>
-                  <Text style={styles.appendixValue}>{report.notes}</Text>
+                  <Text style={styles.appendixValue}>{R(report.notes)}</Text>
                 </View>
               )}
             </View>
