@@ -1,6 +1,6 @@
 "use client";
 
-import type { Profile, Project, ViolationType } from "@/lib/types";
+import type { Profile, Project } from "@/lib/types";
 import { HSE_FIELD_KEYS } from "@/lib/types";
 import type { Dictionary } from "@/lib/i18n";
 import { Icon } from "@/components/ui/icon";
@@ -14,7 +14,8 @@ export interface DetailsValues {
 
 export function DetailsStep({
   project,
-  violation,
+  violationName,
+  onViolationNameChange,
   profile,
   values,
   onChange,
@@ -26,7 +27,8 @@ export function DetailsStep({
   dict,
 }: {
   project: Project;
-  violation: ViolationType;
+  violationName: string;
+  onViolationNameChange: (value: string) => void;
   profile: Profile;
   values: DetailsValues;
   onChange: (values: DetailsValues) => void;
@@ -47,14 +49,7 @@ export function DetailsStep({
   const completionDate = (values.fieldValues[HSE_FIELD_KEYS.COMPLETION_DATE] as string) ?? "";
 
   const missingRequired =
-    !values.observationLocation.trim() ||
-    !observationDescription.trim() ||
-    violation.fields
-      .filter((f) => f.required)
-      .some((f) => {
-        const v = values.fieldValues[f.key];
-        return v === undefined || v === null || v === "";
-      });
+    !violationName.trim() || !values.observationLocation.trim() || !observationDescription.trim();
 
   return (
     <div>
@@ -72,12 +67,23 @@ export function DetailsStep({
 
       <div className="card mb-4 space-y-1.5 text-sm">
         <InfoRow label={dict.wizard.infoProject} value={project.name} />
-        <InfoRow label={dict.wizard.infoViolation} value={violation.name} />
         <InfoRow label={dict.wizard.infoReportedBy} value={profile.full_name} />
         <InfoRow label={dict.wizard.infoDate} value={new Date().toLocaleString()} />
       </div>
 
       <div className="card mb-4 space-y-4">
+        <div>
+          <label className="label">
+            {dict.wizard.infoViolation} <span className="text-red-500">*</span>
+          </label>
+          <input
+            className="input"
+            placeholder={dict.wizard.violationPlaceholder}
+            value={violationName}
+            onChange={(e) => onViolationNameChange(e.target.value)}
+          />
+        </div>
+
         <div>
           <label className="label">
             {dict.wizard.observationLocation} <span className="text-red-500">*</span>
@@ -134,62 +140,6 @@ export function DetailsStep({
           />
         </div>
       </div>
-
-      {violation.fields.length > 0 && (
-        <div className="card mb-4 space-y-4">
-          {violation.fields.map((field) => (
-            <div key={field.key}>
-              <label className="label">
-                {field.label}
-                {field.required && <span className="text-red-500"> *</span>}
-              </label>
-
-              {field.type === "textarea" ? (
-                <textarea
-                  className="input"
-                  rows={3}
-                  placeholder={field.placeholder}
-                  value={(values.fieldValues[field.key] as string) ?? ""}
-                  onChange={(e) => setField(field.key, e.target.value)}
-                />
-              ) : field.type === "select" ? (
-                <select
-                  className="input"
-                  value={(values.fieldValues[field.key] as string) ?? ""}
-                  onChange={(e) => setField(field.key, e.target.value)}
-                >
-                  <option value="" disabled>
-                    …
-                  </option>
-                  {field.options?.map((opt) => (
-                    <option key={opt} value={opt}>
-                      {opt}
-                    </option>
-                  ))}
-                </select>
-              ) : field.type === "checkbox" ? (
-                <label className="flex items-center gap-2 text-sm text-slate-700 dark:text-slate-300">
-                  <input
-                    type="checkbox"
-                    className="h-5 w-5 rounded border-slate-300 text-brand-600"
-                    checked={Boolean(values.fieldValues[field.key])}
-                    onChange={(e) => setField(field.key, e.target.checked)}
-                  />
-                  {dict.common.yes}
-                </label>
-              ) : (
-                <input
-                  type={field.type === "number" ? "number" : field.type === "date" ? "date" : "text"}
-                  className="input"
-                  placeholder={field.placeholder}
-                  value={(values.fieldValues[field.key] as string) ?? ""}
-                  onChange={(e) => setField(field.key, e.target.value)}
-                />
-              )}
-            </div>
-          ))}
-        </div>
-      )}
 
       <div className="card mb-4">
         <label className="label">{dict.wizard.additionalNotes}</label>

@@ -106,6 +106,8 @@ export interface Report {
   // Stage 1 — raised by an observer
   employee_id: string;
   employee_snapshot: PersonSnapshot;
+  /** Contractor user ids the admin has sent this report to; only they (and admins) can act on it. */
+  assigned_contractor_ids: string[];
   /** @deprecated use photo_paths */
   photo_path: string | null;
   photo_paths: string[];

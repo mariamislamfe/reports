@@ -37,6 +37,17 @@ export async function getViolationTypes(opts?: {
   return (data ?? []) as ViolationType[];
 }
 
+export async function getContractorProfiles(): Promise<Profile[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("*")
+    .eq("report_role", "contractor")
+    .order("full_name");
+  if (error) throw error;
+  return (data ?? []) as Profile[];
+}
+
 export async function getReports(opts?: { limit?: number }): Promise<Report[]> {
   const supabase = await createClient();
   let query = supabase.from("reports").select("*").order("created_at", { ascending: false });
