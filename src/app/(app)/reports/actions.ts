@@ -3,6 +3,23 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
+export async function setAssignedContractors(
+  reportId: string,
+  contractorIds: string[]
+): Promise<{ error?: string }> {
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("reports")
+    .update({ assigned_contractor_ids: contractorIds })
+    .eq("id", reportId);
+
+  if (error) return { error: error.message };
+
+  revalidatePath(`/reports/${reportId}`);
+  revalidatePath("/reports");
+  return {};
+}
+
 export async function deleteReport(id: string): Promise<{ error?: string }> {
   const supabase = await createClient();
 

@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getCurrentProfile, getReportById, getSignedPhotoUrls } from "@/lib/data";
+import { getCurrentProfile, getContractorProfiles, getReportById, getSignedPhotoUrls } from "@/lib/data";
 import { getServerDictionary } from "@/lib/i18n/server";
 import { Icon } from "@/components/ui/icon";
 import { ReportStatusBadge } from "@/components/ui/status-badge";
+import { AssignContractorsForm } from "@/components/reports/assign-contractors-form";
 import { formatDateTime, effectivePhotoPaths, isDeadlineUrgent } from "@/lib/utils";
 import { HSE_FIELD_KEYS } from "@/lib/types";
 
@@ -24,13 +25,17 @@ export default async function ReportDetailPage({
   ]);
   if (!report) notFound();
 
-  const [photoUrls, contractorPhotoUrls] = await Promise.all([
+  const [photoUrls, contractorPhotoUrls, contractors] = await Promise.all([
     getSignedPhotoUrls(effectivePhotoPaths(report.photo_paths, report.photo_path)),
     getSignedPhotoUrls(effectivePhotoPaths(report.contractor_photo_paths, report.contractor_photo_path)),
+    profile?.role === "admin" ? getContractorProfiles() : Promise.resolve([]),
   ]);
 
-  const canActAsContractor = profile?.role === "admin" || profile?.report_role === "contractor";
-  const canActAsObserver = profile?.role === "admin" || profile?.report_role === "observer";
+  const canActAsContractor =
+    profile?.role === "admin" ||
+    (profile?.report_role === "contractor" && report.assigned_contractor_ids.includes(profile.id));
+  const canActAsObserver =
+    profile?.role === "admin" || (profile?.report_role === "observer" && report.employee_id === profile?.id);
 
   const observationDescription = report.field_values[HSE_FIELD_KEYS.OBSERVATION_DESCRIPTION];
   const immediateActions = report.field_values[HSE_FIELD_KEYS.IMMEDIATE_ACTIONS];
@@ -75,6 +80,15 @@ export default async function ReportDetailPage({
           <InfoRow label={dict.reports.date} value={formatDateTime(report.created_at)} />
         </div>
       </div>
+
+      {profile?.role === "admin" && (
+        <AssignContractorsForm
+          reportId={report.id}
+          contractors={contractors}
+          initialAssignedIds={report.assigned_contractor_ids}
+          dict={dict}
+        />
+      )}
 
       {/* Stage 1 — Observation */}
       <PhotoGallery urls={photoUrls} />

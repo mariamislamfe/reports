@@ -1,12 +1,7 @@
 import type { Dictionary } from "@/lib/i18n";
 
 export function StepIndicator({ current, dict }: { current: number; dict: Dictionary }) {
-  const steps = [
-    dict.wizard.stepProject,
-    dict.wizard.stepViolation,
-    dict.wizard.stepPhoto,
-    dict.wizard.stepDetails,
-  ];
+  const steps = [dict.wizard.stepProject, dict.wizard.stepPhoto, dict.wizard.stepDetails];
 
   return (
     <div className="mb-6 flex items-center">

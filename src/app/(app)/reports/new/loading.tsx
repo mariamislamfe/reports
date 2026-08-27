@@ -9,8 +9,6 @@ export default function Loading() {
         <Skeleton className="h-8 w-8 rounded-full" />
         <Skeleton className="h-0.5 flex-1" />
         <Skeleton className="h-8 w-8 rounded-full" />
-        <Skeleton className="h-0.5 flex-1" />
-        <Skeleton className="h-8 w-8 rounded-full" />
       </div>
       <Skeleton className="mb-3 h-5 w-40" />
       <div className="space-y-2">

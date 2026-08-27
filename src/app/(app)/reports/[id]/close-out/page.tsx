@@ -16,7 +16,9 @@ export default async function CloseOutPage({ params }: { params: Promise<{ id: s
   if (!report) notFound();
   if (!profile) redirect("/login");
 
-  const canAct = profile.role === "admin" || profile.report_role === "contractor";
+  const canAct =
+    profile.role === "admin" ||
+    (profile.report_role === "contractor" && report.assigned_contractor_ids.includes(profile.id));
   if (!canAct || report.status !== "pending_contractor") redirect(`/reports/${id}`);
 
   return (

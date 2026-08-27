@@ -1,26 +1,23 @@
 "use client";
 
 import { useState } from "react";
-import type { Profile, Project, ViolationType } from "@/lib/types";
+import type { Profile, Project } from "@/lib/types";
 import type { Dictionary } from "@/lib/i18n";
 import { createClient } from "@/lib/supabase/client";
 import { createReport } from "@/app/(app)/reports/new/actions";
 import { StepIndicator } from "./step-indicator";
 import { ProjectSelectStep } from "./project-select-step";
-import { ViolationSelectStep } from "./violation-select-step";
 import { PhotoStep } from "./photo-step";
 import { DetailsStep, type DetailsValues } from "./details-step";
 
 export function ReportWizard({
   projects,
-  violations,
   profile,
   userId,
   recentLocations,
   dict,
 }: {
   projects: Project[];
-  violations: ViolationType[];
   profile: Profile;
   userId: string;
   recentLocations: string[];
@@ -28,7 +25,7 @@ export function ReportWizard({
 }) {
   const [step, setStep] = useState(1);
   const [project, setProject] = useState<Project | null>(null);
-  const [violation, setViolation] = useState<ViolationType | null>(null);
+  const [violationName, setViolationName] = useState("");
   const [photos, setPhotos] = useState<File[]>([]);
   const [details, setDetails] = useState<DetailsValues>({
     observationLocation: "",
@@ -39,7 +36,7 @@ export function ReportWizard({
   const [error, setError] = useState<string | null>(null);
 
   async function handleSubmit() {
-    if (!project || !violation || photos.length === 0) return;
+    if (!project || !violationName.trim() || photos.length === 0) return;
     setSubmitting(true);
     setError(null);
 
@@ -64,7 +61,7 @@ export function ReportWizard({
 
       const result = await createReport({
         projectId: project.id,
-        violationTypeId: violation.id,
+        violationName: violationName.trim(),
         photoPaths,
         observationLocation: details.observationLocation,
         fieldValues: details.fieldValues,
@@ -97,35 +94,24 @@ export function ReportWizard({
       )}
 
       {step === 2 && (
-        <ViolationSelectStep
-          violations={violations}
-          dict={dict}
-          onSelect={(v) => {
-            setViolation(v);
-            setStep(3);
-          }}
-          onBack={() => setStep(1)}
-        />
-      )}
-
-      {step === 3 && (
         <PhotoStep
           photos={photos}
           dict={dict}
           onChange={setPhotos}
-          onBack={() => setStep(2)}
-          onNext={() => setStep(4)}
+          onBack={() => setStep(1)}
+          onNext={() => setStep(3)}
         />
       )}
 
-      {step === 4 && project && violation && (
+      {step === 3 && project && (
         <DetailsStep
           project={project}
-          violation={violation}
+          violationName={violationName}
+          onViolationNameChange={setViolationName}
           profile={profile}
           values={details}
           onChange={setDetails}
-          onBack={() => setStep(3)}
+          onBack={() => setStep(2)}
           onSubmit={handleSubmit}
           submitting={submitting}
           error={error}

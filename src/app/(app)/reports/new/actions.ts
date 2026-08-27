@@ -2,11 +2,11 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
-import type { Project, ViolationType } from "@/lib/types";
+import type { Project } from "@/lib/types";
 
 export interface CreateReportInput {
   projectId: string;
-  violationTypeId: string;
+  violationName: string;
   photoPaths: string[];
   observationLocation: string;
   fieldValues: Record<string, string | number | boolean>;
@@ -26,17 +26,15 @@ export async function createReport(input: CreateReportInput): Promise<CreateRepo
   } = await supabase.auth.getUser();
   if (!user) return { error: "Your session expired. Please sign in again." };
 
-  const [{ data: project }, { data: violation }, { data: profile }] = await Promise.all([
+  const [{ data: project }, { data: profile }] = await Promise.all([
     supabase.from("projects").select("*").eq("id", input.projectId).single(),
-    supabase.from("violation_types").select("*").eq("id", input.violationTypeId).single(),
     supabase.from("profiles").select("*").eq("id", user.id).single(),
   ]);
 
   if (!project) return { error: "Selected project could not be found." };
-  if (!violation) return { error: "Selected violation type could not be found." };
+  if (!input.violationName.trim()) return { error: "Violation is required." };
 
   const typedProject = project as Project;
-  const typedViolation = violation as ViolationType;
 
   const { data: report, error } = await supabase
     .from("reports")
@@ -50,11 +48,11 @@ export async function createReport(input: CreateReportInput): Promise<CreateRepo
         contractor: typedProject.contractor,
         sup_consultant: typedProject.sup_consultant,
       },
-      violation_type_id: typedViolation.id,
+      violation_type_id: null,
       violation_snapshot: {
-        name: typedViolation.name,
-        description: typedViolation.description,
-        fields: typedViolation.fields,
+        name: input.violationName.trim(),
+        description: null,
+        fields: [],
       },
       employee_id: user.id,
       employee_snapshot: {
